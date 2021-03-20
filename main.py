@@ -61,9 +61,6 @@ class GoogleKeywordScreenshooter():
         get_result()
         print(f"Fininshed {self.keyword}!")
 
-    def finish(self):
-        self.browser.quit()
-
     def run(self):
         self.start()
-        self.finish()
+        self.browser.quit()
