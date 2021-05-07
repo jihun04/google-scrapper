@@ -48,7 +48,3 @@ class ResponsiveTester():
     def run(self):
         self.start()
         self.finish()
-
-
-tester = ResponsiveTester([])
-tester.run()
