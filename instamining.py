@@ -6,20 +6,13 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
 from webdriver_manager.chrome import ChromeDriverManager
 
-insta_url = "https://www.instagram.com/explore/tags/"
 initial_hashtag = "dog"
-max_hastags = 20
+max_hashtags = 20
 INSTA_LOGIN_IMFOMATION = [
 ]
 browser = webdriver.Chrome(ChromeDriverManager().install())
 counted_hastags = []
-used_hastags = []
-
-
-def wait_for(locator):
-    return WebDriverWait(browser, 5).until(
-        EC.presence_of_element_located(locator)
-    )
+used_hashtags = []
 
 
 def wait_for_all(locator):
@@ -36,59 +29,36 @@ def insta_login():
     insta_login_inputs[1].send_keys(Keys.ENTER)
 
 
-def get_results(target_hashtag, result_count=10):
-    insta_search_input = browser.find_element_by_class_name("x3qfX")
-    insta_search_input.send_keys(f"#{target_hashtag}")
+def extract_data(target_hashtag):
     try:
+        insta_search_input = WebDriverWait(browser, 2).until(
+            EC.presence_of_element_located((By.CLASS_NAME, "x3qfX"))
+        )
+        insta_search_input.send_keys(f"#{target_hashtag}")
         results = wait_for_all((By.CLASS_NAME, "-qQT3"))
         for result in results:
-            hashtag = result.text.split()[0][1:]
-            post_count = int(result.text.split()[1].replace(",", ""))
-            if hashtag != target_hashtag and hashtag not in used_hastags and post_count > 50:
-                browser.execute_script(
-                    f"window.open('{insta_url + hashtag}')"
-                )
-                if len(browser.window_handles) == result_count:
-                    break
-    except:
-        insta_search_input.clear()
-        get_results(initial_hashtag)
-
-
-def extract_data():
-    try:
-        hashtag_name = wait_for((By.TAG_NAME, "h1"))
-        post_count = wait_for((By.CLASS_NAME, "g47SY"))
-        if post_count:
-            post_count = int(post_count.text.replace(",", ""))
-        if hashtag_name:
-            hashtag_name = hashtag_name.text[1:]
-        if hashtag_name and post_count:
-            counted_hastags.append((hashtag_name, post_count))
-            used_hastags.append(hashtag_name)
+            result_text = result.text.split()
+            hashtag_name = result_text[0][1:]
+            post_count = result_text[1]
+            if hashtag_name not in used_hashtags:
+                if hashtag_name and post_count:
+                    post_count = int(post_count.replace(",", ""))
+                    counted_hastags.append((hashtag_name, post_count))
+                    used_hashtags.append(hashtag_name)
+            if len(used_hashtags) == max_hashtags:
+                break
+        if len(used_hashtags) < max_hashtags:
+            extract_data(used_hashtags[-1])
     except Exception:
         pass
 
 
-def get_related(target_url):
-    get_results(target_url.rstrip("/").split("/")[-1])
-    for window in browser.window_handles[:-1]:
-        browser.switch_to.window(window)
-        extract_data()
-        browser.close()
-        time.sleep(2)
-        if len(used_hastags) == max_hastags:
-            break
-    if len(used_hastags) < max_hastags:
-        browser.switch_to.window(browser.window_handles[0])
-        get_related(browser.current_url)
-
-
-def start(target_url):
+def get_related(target_hashtag):
     insta_login()
     time.sleep(3)
-    browser.get(target_url)
-    get_related(target_url)
+    browser.get(f"https://www.instagram.com/explore/tags/{target_hashtag}")
+    extract_data(target_hashtag)
+    print(counted_hastags)
 
 
-start(f"{insta_url + initial_hashtag}")
+get_related(initial_hashtag)
