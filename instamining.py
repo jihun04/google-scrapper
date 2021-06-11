@@ -1,7 +1,6 @@
 import csv
 import time
 from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
@@ -11,19 +10,16 @@ from webdriver_manager.chrome import ChromeDriverManager
 
 class Instaminer():
     def __init__(self, insta_username, insta_password, initial_hashtag, max_hashtags):
-        options = Options()
-        options.add_argument("--headless")
         self.insta_login_information = [insta_username, insta_password]
         self.login_url = "https://www.instagram.com/accounts/login/"
         self.initial_hashtag = initial_hashtag
         self.max_hashtags = max_hashtags
-        self.browser = webdriver.Chrome(
-            ChromeDriverManager().install(), options=options)
+        self.browser = webdriver.Chrome(ChromeDriverManager().install())
         self.counted_hashtags = []
         self.used_hashtags = []
 
     def wait_for_all(self, locator):
-        return WebDriverWait(self.browser, 5).until(
+        return WebDriverWait(self.browser, 10).until(
             EC.presence_of_all_elements_located(locator)
         )
 
@@ -36,7 +32,7 @@ class Instaminer():
 
     def extract_data(self, target_hashtag):
         try:
-            insta_search_input = WebDriverWait(self.browser, 2).until(
+            insta_search_input = WebDriverWait(self.browser, 10).until(
                 EC.presence_of_element_located((By.CLASS_NAME, "x3qfX"))
             )
             insta_search_input.send_keys(f"#{target_hashtag}")
@@ -81,4 +77,4 @@ class Instaminer():
         self.get_related(self.initial_hashtag)
 
 
-Instaminer("", input("What is your password?"), "", 20).start()
+Instaminer("jihun516418", input("What is your password?"), "dog", 20).start()
